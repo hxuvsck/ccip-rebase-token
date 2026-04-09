@@ -7,4 +7,4 @@
 3. Interest rate
     — Individually set an interest rate or each user based on some global interest rate of the protocol at the time the user deposits into the vault.
     — This global interest can only decrease to incentivise/reward early adopters. (Administrator can reduce it)
-    — 
+    — # ccip-rebase-token
