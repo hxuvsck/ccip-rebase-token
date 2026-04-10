@@ -9,6 +9,8 @@ out/
 
 # Docs
 docs/
+lib/
+.codex/
 
 # Dotenv file
 .env
