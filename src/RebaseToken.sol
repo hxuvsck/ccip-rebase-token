@@ -1,4 +1,44 @@
+// Layout of Contract:
+// version
+// imports
+// errors
+// interfaces, libraries, contracts
+// Type declarations
+// State variables
+// Events
+// Modifiers
+// Functions
+
+// Layout of Functions:
+// constructor
+// receive function (if exists)
+// fallback function (if exists)
+// external
+// public
+// internal
+// private
+// internal & private view & pure functions
+// external & public view & pure functions
+
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-contract RebaseToken {}
+import {ERC20} from "@openzeppelin/contracts/token";
+
+    /**
+     * @title RebaseToken
+     * @author Khuslen G.
+     * @notice This is a cross-chain rebase token that incentivises users to deposit into a vault and gain interest from it in rewards.
+     * @notice The interest rate for this smart contracts can only decrease
+     * @notice Each user will have their own interest rate that is the global interest rate at the time of depositing. 
+     */
+contract RebaseToken is ERC20 {
+
+    uint256 public s_interestRate = 5e10;
+
+    constructor() ERC20("Rebase Token". "RBT") {}
+
+    function setInterestRate(uint256 _newInterestRate) external {
+        // Set the interest rate
+    }
+}
