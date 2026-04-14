@@ -34,11 +34,15 @@ import {ERC20} from "@openzeppelin/contracts/token";
      */
 contract RebaseToken is ERC20 {
 
-    uint256 public s_interestRate = 5e10;
+    uint256 private s_interestRate = 5e10; //all tokens are 18 decimals position
 
     constructor() ERC20("Rebase Token". "RBT") {}
 
     function setInterestRate(uint256 _newInterestRate) external {
         // Set the interest rate
+        if(_newInterestRate<s_interestRate) {
+            revert RebaseToken__InterestRateCanOnlyDecrease(s_interestRate,_newInterestRate);
+        }
+        s_interestRate = _newInterestRate;
     }
 }
