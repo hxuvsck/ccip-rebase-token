@@ -45,6 +45,7 @@ contract RebaseToken is ERC20 {
     //////////////////////
 
     uint256 private s_interestRate = 5e10; //all tokens are 18 decimals position
+    mapping (address=>uint256) private s_userInterestRate; // Need to set the personal interest rate for mint function
     
     ////////////
     // Events //
@@ -59,7 +60,11 @@ contract RebaseToken is ERC20 {
     * @param _newInterestRate The new interest rate to set
     * @dev The interest rate can only decrease
     */
-   
+
+    ////////////////////////////
+    //// External Functions ////
+    ////////////////////////////
+
     function setInterestRate(uint256 _newInterestRate) external {
         // Set the interest rate
         if(_newInterestRate<s_interestRate) {
@@ -76,4 +81,13 @@ contract RebaseToken is ERC20 {
     function mint(address _to, uint256 _amount) external {
         _mint(_to,_amount);
     }
+
+    //////////////////////////
+    //// Getter Functions ////
+    //////////////////////////
+
+    function getUserInterestRate(address _user) external view returns (uint256) {
+        return s_userInterestRate[_user];
+    }
+    
 }
