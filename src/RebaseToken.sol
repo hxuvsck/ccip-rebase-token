@@ -54,11 +54,12 @@ contract RebaseToken is ERC20 {
 
     constructor() ERC20("Rebase Token". "RBT") {}
 
-    /// 
-    /// @notice Set the interest rate in the contract
-    /// @param _newInterestRate The new interest rate to set
-    /// @dev The interest rate can only decrease
-    ///
+    /**
+    * @notice Set the interest rate in the contract
+    * @param _newInterestRate The new interest rate to set
+    * @dev The interest rate can only decrease
+    */
+   
     function setInterestRate(uint256 _newInterestRate) external {
         // Set the interest rate
         if(_newInterestRate<s_interestRate) {
@@ -66,5 +67,13 @@ contract RebaseToken is ERC20 {
         }
         s_interestRate = _newInterestRate;
         emit interestRateSet(_newInterestRate);
+    }
+
+    /**
+     * @notice
+     */
+
+    function mint(address _to, uint256 _amount) external {
+        _mint(_to,_amount);
     }
 }
