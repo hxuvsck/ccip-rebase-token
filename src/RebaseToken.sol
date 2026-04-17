@@ -1,3 +1,6 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.24;
+
 // Layout of Contract:
 // version
 // imports
@@ -20,9 +23,6 @@
 // internal & private view & pure functions
 // external & public view & pure functions
 
-// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.24;
-
 import {ERC20} from "@openzeppelin/contracts/token";
 
     /**
@@ -34,15 +34,37 @@ import {ERC20} from "@openzeppelin/contracts/token";
      */
 contract RebaseToken is ERC20 {
 
+    /////////////
+    // Errors ///
+    /////////////
+
+    error RebaseToken__InterestRateCanOnlyDecrease();
+
+    //////////////////////
+    // State Variables ///
+    //////////////////////
+
     uint256 private s_interestRate = 5e10; //all tokens are 18 decimals position
+    
+    ////////////
+    // Events //
+    ////////////
+
+    event interestRateSet(uint256 newInterestRate);
 
     constructor() ERC20("Rebase Token". "RBT") {}
 
+    /// 
+    /// @notice Set the interest rate in the contract
+    /// @param _newInterestRate The new interest rate to set
+    /// @dev The interest rate can only decrease
+    ///
     function setInterestRate(uint256 _newInterestRate) external {
         // Set the interest rate
         if(_newInterestRate<s_interestRate) {
             revert RebaseToken__InterestRateCanOnlyDecrease(s_interestRate,_newInterestRate);
         }
         s_interestRate = _newInterestRate;
+        emit interestRateSet(_newInterestRate);
     }
 }
