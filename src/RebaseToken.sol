@@ -79,13 +79,32 @@ contract RebaseToken is ERC20 {
      */
 
     function mint(address _to, uint256 _amount) external {
+        // Minted nor not minted, interest rate of accumulated must be stacked up for calculating
+        _mintAccruedInterest(_to);
+        // Get the personal user interest rate to calculate how much should be calculated for certain users.
+        // Because when user deposits more amount into their wallet, the calculated amount of previous interest should be updated to a new amount calculation in balance.
+        s_userInterestRate[_to]=s_interestRate;
         _mint(_to,_amount);
+    }
+
+    ////////////////////////////
+    //// Internal Functions ////
+    ////////////////////////////
+
+    function _mintAccruedInterest(address _user) internal {
+        // Find their current balance of rebase tokens that have been minted to them already.
+        // Calculate their current balance including any interest.
     }
 
     //////////////////////////
     //// Getter Functions ////
     //////////////////////////
 
+    /**
+     * @notice Get the user interest rate
+     * @param _user The user to get the user interest rate for
+     * @return The interest rate for the users
+     */
     function getUserInterestRate(address _user) external view returns (uint256) {
         return s_userInterestRate[_user];
     }
