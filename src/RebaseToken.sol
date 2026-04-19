@@ -44,8 +44,10 @@ contract RebaseToken is ERC20 {
     // State Variables ///
     //////////////////////
 
+    uint256 private constant PRECISION_FACTOR = 1e18;
     uint256 private s_interestRate = 5e10; //all tokens are 18 decimals position
     mapping (address=>uint256) private s_userInterestRate; // Need to set the personal interest rate for mint function
+    mapping (address=>uint256) private s_userLastUpdatedTimestamp; 
     
     ////////////
     // Events //
@@ -75,7 +77,9 @@ contract RebaseToken is ERC20 {
     }
 
     /**
-     * @notice
+     * @notice Mint the user tokens when they deposit into the vault
+     * @param _to The user to mint the tokens to
+     * @param _amount The amount of tokens to mint
      */
 
     function mint(address _to, uint256 _amount) external {
@@ -87,13 +91,50 @@ contract RebaseToken is ERC20 {
         _mint(_to,_amount);
     }
 
+    /**
+     * @notice Calculate the balance for the user including the interest that has accumulated since the last update
+     * @dev (principle balance) + some interest that has accrued
+     * @param _user The user to calculate the balance of
+     * @return The balance of the user including the interest that has accumulated since the last update
+     */
+
+    function balanceOf(address _user) public view override returns(uint256) {
+        // Get the current principle balance of the user (the number of tokens that have actually been minted to the user)
+        // Multiply the principle balance by the interest that has accumulated in the time since the balance was updated
+        return super.balanceOf(_user) * _calculateUserAccumulatedInterestSinceLastUpdate(_user)/PRECISION_FACTOR;
+    }
+
     ////////////////////////////
     //// Internal Functions ////
     ////////////////////////////
 
+    /**
+     * @notice Calculate the interest that has accumulated since the last update
+     * @param _user The user to calculate the interest accumulated for
+     * @return The interest that has accumulated since the last update
+     */
+    function _calculateUserAccumulatedInterestSinceLastUpdate(address _user) internal view returns(uint256 linearInterest) {
+        // We need to calculate the interest that has accumulated since the last update
+        // This is going to be linear growth with time
+        // 1. Calculate the time since the last update
+        // 2. Calculate the amount of linear growth
+        // principal amount(1 * interest rate * time elapsed)
+        // deposit: 10 tokens
+        // interest rate 0.5 token per second
+        // time elapsed is 2 seconds
+        // 10 + (10 * 0.5 * 2)
+
+        uint256 timeElapsed = block.timestamp - s_userLastUpdatedTimestamp[_user];
+        linearInterest = (PRECISION_FACTOR + (s_interestRate[_user] * timeElapsed));
+    }
+
     function _mintAccruedInterest(address _user) internal {
-        // Find their current balance of rebase tokens that have been minted to them already.
-        // Calculate their current balance including any interest.
+        // (1) Find their current balance of rebase tokens that have been minted to them already. -> principle balance
+        // (2) Calculate their current balance including any interest. -> from balanceOf()
+        // Calculate the number of tokens that need to be minted to the user -> (2) - (1)
+        // Call _mint() to mint the tokens to the user
+        // Set the last updated timestamp
+        s_userLastUpdatedTimestamp[_user] = block.timestamp;
     }
 
     //////////////////////////
