@@ -92,6 +92,22 @@ contract RebaseToken is ERC20 {
     }
 
     /**
+     * @notice Burn the user tokens when they withdraw from the vault
+     * @param _from The user to burn the tokens from
+     * @param _amount The amount of tokens to burn
+     */
+    function burn(address _from, uint256 _amount) external {
+        //   Handle Maximum Amount (Dust Mitigation):
+        // A common convention in DeFi is to use type(uint256).max as an input _amount to signify an intent to interact with the user's entire balance. This helps solve the "dust" problem: tiny, fractional amounts of tokens (often from interest) that might accrue between the moment a user initiates a transaction (like a full withdrawal) and the time it's actually executed on the blockchain due to network latency or block confirmation times.
+        // If _amount is type(uint256).max, we update _amount to be the user's current total balance, including any just-in-time accrued interest. This is fetched using our overridden balanceOf(_from) function.
+        if(_amount==type(uint256).max){
+            _amount = balanceOf(_from);
+        }
+        _mintAccruedInterest(_from);
+        _burn(_from, _amount);
+    }
+
+    /**
      * @notice Calculate the balance for the user including the interest that has accumulated since the last update
      * @dev (principle balance) + some interest that has accrued
      * @param _user The user to calculate the balance of
@@ -128,13 +144,21 @@ contract RebaseToken is ERC20 {
         linearInterest = (PRECISION_FACTOR + (s_interestRate[_user] * timeElapsed));
     }
 
+    /**
+     * @notice Mint the accrued interest to the user since the last time they interacted with the protocol (e.g. burn, mint, transfer)
+     * @param _user The user to mint the accrued interest to
+     */
     function _mintAccruedInterest(address _user) internal {
         // (1) Find their current balance of rebase tokens that have been minted to them already. -> principle balance
+        uint256 previousPrincipleBalance = super.balanceOf(_user);
         // (2) Calculate their current balance including any interest. -> from balanceOf()
+        uint256 currentBalance = balanceOf(_user);
         // Calculate the number of tokens that need to be minted to the user -> (2) - (1)
-        // Call _mint() to mint the tokens to the user
+        uint256 balanceIncrease = currentBalance - previousPrincipleBalance;
         // Set the last updated timestamp
         s_userLastUpdatedTimestamp[_user] = block.timestamp;
+        // Call _mint() to mint the tokens to the user
+        _mint(_user, balanceIncrease);
     }
 
     //////////////////////////
