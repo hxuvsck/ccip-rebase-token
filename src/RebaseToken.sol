@@ -28,6 +28,7 @@ import {ERC20} from "@openzeppelin/contracts/token";
     /**
      * @title RebaseToken
      * @author Khuslen G.
+     * @notice If you want to make it more modified, as changing symbols, decimals, totalSupply etc... Please go checkout ERC20.sol of OpenZeppelin library which installed in lib/
      * @notice This is a cross-chain rebase token that incentivises users to deposit into a vault and gain interest from it in rewards.
      * @notice The interest rate for this smart contracts can only decrease
      * @notice Each user will have their own interest rate that is the global interest rate at the time of depositing. 
@@ -81,7 +82,6 @@ contract RebaseToken is ERC20 {
      * @param _to The user to mint the tokens to
      * @param _amount The amount of tokens to mint
      */
-
     function mint(address _to, uint256 _amount) external {
         // Minted nor not minted, interest rate of accumulated must be stacked up for calculating
         _mintAccruedInterest(_to);
@@ -113,12 +113,17 @@ contract RebaseToken is ERC20 {
      * @param _user The user to calculate the balance of
      * @return The balance of the user including the interest that has accumulated since the last update
      */
-
     function balanceOf(address _user) public view override returns(uint256) {
         // Get the current principle balance of the user (the number of tokens that have actually been minted to the user)
         // Multiply the principle balance by the interest that has accumulated in the time since the balance was updated
         return super.balanceOf(_user) * _calculateUserAccumulatedInterestSinceLastUpdate(_user)/PRECISION_FACTOR;
     }
+
+    /**
+     * 
+     * @param _user 
+     */
+    function transfer(address _recipient, uint256 _amount) external public override returns(bool) {} // "n transfer" to search for function named transfer as n is for last spell of function *hack*
 
     ////////////////////////////
     //// Internal Functions ////
