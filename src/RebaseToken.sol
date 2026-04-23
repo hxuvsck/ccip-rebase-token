@@ -23,7 +23,8 @@ pragma solidity ^0.8.24;
 // internal & private view & pure functions
 // external & public view & pure functions
 
-import {ERC20} from "@openzeppelin/contracts/token";
+import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
     /**
      * @title RebaseToken
@@ -33,7 +34,7 @@ import {ERC20} from "@openzeppelin/contracts/token";
      * @notice The interest rate for this smart contracts can only decrease
      * @notice Each user will have their own interest rate that is the global interest rate at the time of depositing. 
      */
-contract RebaseToken is ERC20 {
+contract RebaseToken is ERC20, Ownable {
 
     /////////////
     // Errors ///
@@ -56,7 +57,7 @@ contract RebaseToken is ERC20 {
 
     event interestRateSet(uint256 newInterestRate);
 
-    constructor() ERC20("Rebase Token". "RBT") {}
+    constructor() ERC20("Rebase Token". "RBT") Ownable(msg.sender){}
 
     /**
     * @notice Set the interest rate in the contract
@@ -68,7 +69,7 @@ contract RebaseToken is ERC20 {
     //// External Functions ////
     ////////////////////////////
 
-    function setInterestRate(uint256 _newInterestRate) external {
+    function setInterestRate(uint256 _newInterestRate) external onlyOwner {
         // Set the interest rate
         if(_newInterestRate<s_interestRate) {
             revert RebaseToken__InterestRateCanOnlyDecrease(s_interestRate,_newInterestRate);
