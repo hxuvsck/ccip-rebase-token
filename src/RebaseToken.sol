@@ -26,6 +26,7 @@ pragma solidity ^0.8.24;
 import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
+import {IRebaseToken} from "./interfaces/IRebaseToken.sol";
 
 /**
  * @title RebaseToken
@@ -35,12 +36,12 @@ import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
  * @notice The interest rate for this smart contracts can only decrease
  * @notice Each user will have their own interest rate that is the global interest rate at the time of depositing.
  */
-contract RebaseToken is ERC20, Ownable, AccessControl {
+contract RebaseToken is ERC20, Ownable, AccessControl, IRebaseToken {
     /////////////
     // Errors ///
     /////////////
 
-    error RebaseToken__InterestRateCanOnlyDecrease();
+    error RebaseToken__InterestRateCanOnlyDecrease(uint256 oldRate, uint256 newRate);
 
     //////////////////////
     // State Variables ///
@@ -140,7 +141,8 @@ contract RebaseToken is ERC20, Ownable, AccessControl {
      * @param _amount The amount of tokens to transfer
      * @return True if the transfer was successful
      */
-    function transfer(address _recipient, uint256 _amount) external override returns (bool) {
+
+    function transfer(address _recipient, uint256 _amount) public override returns (bool) {
         _mintAccruedInterest(msg.sender);
         _mintAccruedInterest(_recipient);
         if (_amount == type(uint256).max) {
@@ -168,7 +170,7 @@ contract RebaseToken is ERC20, Ownable, AccessControl {
         if (balanceOf(_recipient) == 0) {
             s_userInterestRate[_recipient] = s_userInterestRate[_sender];
         }
-        return super.transfer(_sender, _recipient, _amount);
+        return super.transfer(_recipient, _amount);
     }
 
     ////////////////////////////
@@ -178,7 +180,7 @@ contract RebaseToken is ERC20, Ownable, AccessControl {
     /**
      * @notice Calculate the interest that has accumulated since the last update
      * @param _user The user to calculate the interest accumulated for
-     * @return The interest that has accumulated since the last update
+     * @return linearInterest The interest that has accumulated since the last update
      */
     function _calculateUserAccumulatedInterestSinceLastUpdate(address _user)
         internal
@@ -196,7 +198,7 @@ contract RebaseToken is ERC20, Ownable, AccessControl {
         // 10 + (10 * 0.5 * 2)
 
         uint256 timeElapsed = block.timestamp - s_userLastUpdatedTimestamp[_user];
-        linearInterest = (PRECISION_FACTOR + (s_interestRate[_user] * timeElapsed));
+        linearInterest = (PRECISION_FACTOR + (s_userInterestRate[_user] * timeElapsed));
     }
 
     /**
