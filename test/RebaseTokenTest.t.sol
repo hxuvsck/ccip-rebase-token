@@ -22,4 +22,16 @@ contract RebaseTokenTest is Test {
         (bool success,) = payable(address(vault)).call{value: 1e18}("");
         vm.stopPrank();
     }
+
+    function testIfDepositIsLinear(uint256 amount) public {
+        vm.assume(amount > 1e5);
+        amount = bound(amount, 1e5, type(uint96).max);
+        // 1. Deposit
+        vm.startPrank(user);
+        vm.deal(user, amount);
+        // 2. Check our Rebase Token balance
+        // 3. Warp the time and check the balance again
+        // 4. Warp the time again by the same amount and check the balance again
+        vm.stopPrank();
+    }
 }
