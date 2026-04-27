@@ -11,8 +11,15 @@ contract RebaseTokenTest is Test {
     RebaseToken private rebaseToken;
     Vault private vault;
 
+    address public owner = makeAddr("owner");
+    address public user = makeAddr("user");
+
     function setUp() public {
+        vm.startPrank(owner);
         rebaseToken = new RebaseToken();
-        vault = new Vault(IRebaseToken(rebaseToken));
+        vault = new Vault(IRebaseToken(address(rebaseToken)));
+        rebaseToken.grantMintAndBurnRole(address(vault));
+        (bool success,) = payable(address(vault)).call{value: 1e18}("");
+        vm.stopPrank();
     }
 }
