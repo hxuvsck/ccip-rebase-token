@@ -47,9 +47,10 @@ contract RebaseToken is ERC20, Ownable, AccessControl, IRebaseToken {
     // State Variables ///
     //////////////////////
 
-    uint256 private constant PRECISION_FACTOR = 1e18;
+    uint256 private constant PRECISION_FACTOR = 1e27; // prev: 1e18;
     bytes32 private constant MINT_AND_BURN_ROLE = keccak256("MINT_AND_BURN_ROLE");
-    uint256 private s_interestRate = 5e10; //all tokens are 18 decimals position
+    // uint256 private s_interestRate = 5e10; //all tokens are 18 decimals position
+    uint256 private s_interestRate = (5 * PRECISION_FACTOR) / 1e8; // 10^-8 = 10^8
     mapping(address => uint256) private s_userInterestRate; // Need to set the personal interest rate for mint function
     mapping(address => uint256) private s_userLastUpdatedTimestamp;
 
