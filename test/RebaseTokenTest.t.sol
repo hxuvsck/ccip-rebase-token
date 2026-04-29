@@ -47,5 +47,17 @@ contract RebaseTokenTest is Test {
         vm.stopPrank();
     }
 
-    function getRedeemStraightAway(uint256 amount) public {}
+    function testGetRedeemStraightAway(uint256 amount) public {
+        amount = bound(amount, 1e5, type(uint96).max);
+        // 1. Deposit
+        vm.startPrank(user);
+        vm.deal(user, amount);
+        vault.deposit{value: amount}();
+        assertEq(rebaseToken.balanceOf(user), amount);
+        //2. Redeem
+        vault.redeem(type(uint256).max);
+        assertEq(rebaseToken.balanceOf(user), 0);
+        assertEq(address(user).balance, amount);
+        vm.stopPrank();
+    }
 }

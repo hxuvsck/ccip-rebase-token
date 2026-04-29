@@ -36,7 +36,7 @@ import {IRebaseToken} from "./interfaces/IRebaseToken.sol";
  * @notice The interest rate for this smart contracts can only decrease
  * @notice Each user will have their own interest rate that is the global interest rate at the time of depositing.
  */
-contract RebaseToken is ERC20, Ownable, AccessControl, IRebaseToken {
+contract RebaseToken is ERC20, IRebaseToken, Ownable, AccessControl {
     /////////////
     // Errors ///
     /////////////
@@ -90,7 +90,7 @@ contract RebaseToken is ERC20, Ownable, AccessControl, IRebaseToken {
      * @param _user The user to get the principle balance for
      * @return The principle balance of the user
      */
-    function principleBalanceOf(address _user) external view returns (uint256) {
+    function principleBalanceOf(address _user) public view returns (uint256) {
         return super.balanceOf(_user);
     }
 
@@ -117,9 +117,9 @@ contract RebaseToken is ERC20, Ownable, AccessControl, IRebaseToken {
         //   Handle Maximum Amount (Dust Mitigation):
         // A common convention in DeFi is to use type(uint256).max as an input _amount to signify an intent to interact with the user's entire balance. This helps solve the "dust" problem: tiny, fractional amounts of tokens (often from interest) that might accrue between the moment a user initiates a transaction (like a full withdrawal) and the time it's actually executed on the blockchain due to network latency or block confirmation times.
         // If _amount is type(uint256).max, we update _amount to be the user's current total balance, including any just-in-time accrued interest. This is fetched using our overridden balanceOf(_from) function.
-        if (_amount == type(uint256).max) {
-            _amount = balanceOf(_from);
-        }
+        // if (_amount == type(uint256).max) {
+        //     _amount = balanceOf(_from);
+        // }
         _mintAccruedInterest(_from);
         _burn(_from, _amount);
     }
@@ -130,7 +130,7 @@ contract RebaseToken is ERC20, Ownable, AccessControl, IRebaseToken {
      * @param _user The user to calculate the balance of
      * @return The balance of the user including the interest that has accumulated since the last update
      */
-    function balanceOf(address _user) public view override returns (uint256) {
+    function balanceOf(address _user) public view override(ERC20, IRebaseToken) returns (uint256) {
         // Get the current principle balance of the user (the number of tokens that have actually been minted to the user)
         // Multiply the principle balance by the interest that has accumulated in the time since the balance was updated
         return super.balanceOf(_user) * _calculateUserAccumulatedInterestSinceLastUpdate(_user) / PRECISION_FACTOR;
@@ -143,16 +143,19 @@ contract RebaseToken is ERC20, Ownable, AccessControl, IRebaseToken {
      * @return True if the transfer was successful
      */
 
-    function transfer(address _recipient, uint256 _amount) public override returns (bool) {
-        _mintAccruedInterest(msg.sender);
+    function transferFrom(address _sender, address _recipient, uint256 _amount) public override returns (bool) {
+        _mintAccruedInterest(_sender);
         _mintAccruedInterest(_recipient);
+
         if (_amount == type(uint256).max) {
-            _amount = balanceOf(msg.sender);
+            _amount = balanceOf(_sender);
         }
+
         if (balanceOf(_recipient) == 0) {
-            s_userInterestRate[_recipient] = s_userInterestRate[msg.sender];
+            s_userInterestRate[_recipient] = s_userInterestRate[_sender];
         }
-        return super.transfer(_recipient, _amount);
+
+        return super.transferFrom(_sender, _recipient, _amount);
     } // "n transfer" to search for function named transfer as n is for last spell of function hackk
 
     /**
@@ -162,17 +165,17 @@ contract RebaseToken is ERC20, Ownable, AccessControl, IRebaseToken {
      * @param _amount The amount of tokens to transfer
      * @return True if the transfer was successful
      */
-    function transferFrom(address _sender, address _recipient, uint256 _amount) public override returns (bool) {
-        _mintAccruedInterest(_sender);
-        _mintAccruedInterest(_recipient);
-        if (_amount == type(uint256).max) {
-            _amount = balanceOf(_sender);
-        }
-        if (balanceOf(_recipient) == 0) {
-            s_userInterestRate[_recipient] = s_userInterestRate[_sender];
-        }
-        return super.transfer(_recipient, _amount);
-    }
+    // function transferFrom(address _sender, address _recipient, uint256 _amount) public override returns (bool) {
+    //     _mintAccruedInterest(_sender);
+    //     _mintAccruedInterest(_recipient);
+    //     if (_amount == type(uint256).max) {
+    //         _amount = balanceOf(_sender);
+    //     }
+    //     if (balanceOf(_recipient) == 0) {
+    //         s_userInterestRate[_recipient] = s_userInterestRate[_sender];
+    //     }
+    //     return super.transfer(_recipient, _amount);
+    // }
 
     ////////////////////////////
     //// Internal Functions ////
