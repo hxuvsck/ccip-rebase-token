@@ -46,4 +46,6 @@ contract RebaseTokenTest is Test {
         assertApproxEqAbs(endBalance - middleBalance, middleBalance - startBalance, 1);
         vm.stopPrank();
     }
+
+    function getRedeemStraightAway(uint256 amount) public {}
 }
