@@ -60,4 +60,26 @@ contract RebaseTokenTest is Test {
         assertEq(address(user).balance, amount);
         vm.stopPrank();
     }
+
+    function testRedeemAfterTimePassed(uint256 depositAmount, uint256 time) public {
+        time = bound(time, 1000, type(uint256).max);
+        depositAmount = bound(depositAmount, 1e5, type(uint256).max);
+        // 1. Deposit
+        vm.startPrank(user);
+        vm.deal(user, depositAmount);
+        vault.deposit{value: depositAmount}();
+
+        // 2. Warp the time
+        vm.warp(block.timestamp + time);
+        uint256 balance = rebaseToken.balanceOf(user);
+
+        // 3. Redeem
+        vault.redeem(type(uint256).max);
+        vm.stopPrank();
+
+        uint256 ethBalance = address(user).balance;
+
+        assertEq(ethBalance, balance);
+        assertGt(ethBalance, depositAmount);
+    }
 }
