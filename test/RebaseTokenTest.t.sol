@@ -139,7 +139,18 @@ contract RebaseTokenTest is Test {
         vm.expectPartialRevert(bytes4(IAccessControl.AccessControlUnauthorizedAccount.selector)); // onlyRole
         rebaseToken.mint(user, 100);
         vm.expectPartialRevert(bytes4(IAccessControl.AccessControlUnauthorizedAccount.selector)); //OnlyRole
-        rebaseToken.burn(user, 100);
-        
+        rebaseToken.burn(user, 100);   
+    }
+
+    function testGetPrincipleAmount(uint256 amount) public {
+        amount = bound(amount, 1e5, type(uint96).max);
+        // 1. Deposit
+        vm.deal(user, amount);
+        vm.prank(user);
+        vault.deposit{value: amount}();
+        assertEq(rebaseToken.principleBalanceOf(user), amount);
+
+        vm.warp(block.timestamp + 1 hours);
+        assertEq(rebaseToken.principleBalanceOf(user), amount);
     }
 }
