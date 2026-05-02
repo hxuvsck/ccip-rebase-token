@@ -6,7 +6,8 @@ import {Test, console} from "forge-std/Test.sol";
 import {RebaseToken} from "../src/RebaseToken.sol";
 import {Vault} from "../src/Vault.sol";
 import {IRebaseToken} from "../src/interfaces/IRebaseToken.sol";
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol"; // for checking set new Interest Rate testing
+import {IAccessControl} from "@openzeppelin/contracts/access/AccessControl.sol"; // for checking Mint and Burn testing
 
 contract RebaseTokenTest is Test {
     RebaseToken private rebaseToken;
@@ -128,16 +129,16 @@ contract RebaseTokenTest is Test {
 
     function testCannotSetInterestRate(uint256 newInterestRate) public {
         vm.prank(user);
-        vm.expectPartialRevert(Ownable.OwnableUnauthorizedAccount.selector); // customers can have args and are difficult to calculate in a testing env & could be unrelated to the test at hand. As we need Partial Revert to be expected
+        vm.expectPartialRevert(bytes4(Ownable.OwnableUnauthorizedAccount.selector)); // customers can have args and are difficult to calculate in a testing env & could be unrelated to the test at hand. As we need Partial Revert to be expected
         // And are of Ownable to be found as it's selector from where onlyOwner's _checkOwner, revert of OwnableUnauthorizedAccount as to be checked for this revert
         rebaseToken.setInterestRate(newInterestRate);
     }
 
     function testCannotCallMintAndBurn() public {
         vm.prank(user);
-        vm.expectRevert();
+        vm.expectPartialRevert(bytes4(IAccessControl.AccessControlUnauthorizedAccount.selector)); // onlyRole
         rebaseToken.mint(user, 100);
-        vm.expectRevert();
+        vm.expectPartialRevert(bytes4(IAccessControl.AccessControlUnauthorizedAccount.selector)); //OnlyRole
         rebaseToken.burn(user, 100);
         
     }
