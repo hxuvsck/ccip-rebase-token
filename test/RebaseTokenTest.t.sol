@@ -6,6 +6,7 @@ import {Test, console} from "forge-std/Test.sol";
 import {RebaseToken} from "../src/RebaseToken.sol";
 import {Vault} from "../src/Vault.sol";
 import {IRebaseToken} from "../src/interfaces/IRebaseToken.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 contract RebaseTokenTest is Test {
     RebaseToken private rebaseToken;
@@ -91,5 +92,53 @@ contract RebaseTokenTest is Test {
 
         assertEq(ethBalance, balanceAfterSomeTime);
         assertGt(ethBalance, depositAmount);
+    }
+
+    function testTransfer(uint256 amount, uint256 amountToSend) public {
+        amount = bound(amount, 1e5 + 1e5, type(uint96).max);
+        amountToSend = bound(amountToSend, 1e5, amount - 1e5);
+
+        // 1. Deposit
+        vm.deal(user, amount);
+        vm.prank(user);
+        vault.deposit{value: amount}();
+
+        address user2 = makeAddr("user2");
+        uint256 userBalanceBefore = rebaseToken.balanceOf(user);
+        uint256 user2BalanceBefore = rebaseToken.balanceOf(user2);
+        assertEq(userBalanceBefore, amount);
+        assertEq(user2BalanceBefore, 0);
+
+        // Owner reduces the interest rate
+        vm.prank(owner);
+        rebaseToken.setInterestRate(4e10);
+
+        // 2. Transfer
+        vm.prank(user);
+        rebaseToken.transfer(user2, amountToSend);
+        uint256 userBalanceAfter = rebaseToken.balanceOf(user);
+        uint256 user2BalanceAfter = rebaseToken.balanceOf(user2);
+        assertEq(userBalanceAfter, userBalanceBefore - amountToSend);
+        assertEq(user2BalanceAfter, amountToSend);
+
+        // Check the user interest rate has been inherited (5e10 not 4e10)
+        assertEq(rebaseToken.getUserInterestRate(user), 5e10);
+        assertEq(rebaseToken.getUserInterestRate(user2), 5e10);
+    }
+
+    function testCannotSetInterestRate(uint256 newInterestRate) public {
+        vm.prank(user);
+        vm.expectPartialRevert(Ownable.OwnableUnauthorizedAccount.selector); // customers can have args and are difficult to calculate in a testing env & could be unrelated to the test at hand. As we need Partial Revert to be expected
+        // And are of Ownable to be found as it's selector from where onlyOwner's _checkOwner, revert of OwnableUnauthorizedAccount as to be checked for this revert
+        rebaseToken.setInterestRate(newInterestRate);
+    }
+
+    function testCannotCallMintAndBurn() public {
+        vm.prank(user);
+        vm.expectRevert();
+        rebaseToken.mint(user, 100);
+        vm.expectRevert();
+        rebaseToken.burn(user, 100);
+        
     }
 }

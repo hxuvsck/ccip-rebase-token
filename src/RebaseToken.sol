@@ -78,7 +78,7 @@ contract RebaseToken is ERC20, IRebaseToken, Ownable, AccessControl {
 
     function setInterestRate(uint256 _newInterestRate) external onlyOwner {
         // Set the interest rate
-        if (_newInterestRate < s_interestRate) {
+        if (_newInterestRate > s_interestRate) {
             revert RebaseToken__InterestRateCanOnlyDecrease(s_interestRate, _newInterestRate);
         }
         s_interestRate = _newInterestRate;
@@ -136,6 +136,26 @@ contract RebaseToken is ERC20, IRebaseToken, Ownable, AccessControl {
         return super.balanceOf(_user) * _calculateUserAccumulatedInterestSinceLastUpdate(_user) / PRECISION_FACTOR;
     }
 
+    function transfer(address _recipient, uint256 _amount) public override returns (bool) {
+        address sender = msg.sender;
+
+        // Accrue interest for both parties before state changes
+        _mintAccruedInterest(sender);
+        _mintAccruedInterest(_recipient);
+
+        // Handle "send all"
+        if (_amount == type(uint256).max) {
+            _amount = balanceOf(sender);
+        }
+
+        // If recipient had no tokens BEFORE transfer, inherit rate
+        if (balanceOf(_recipient) == 0) {
+            s_userInterestRate[_recipient] = s_userInterestRate[sender];
+        }
+
+        return super.transfer(_recipient, _amount);
+    }
+
     /**
      * @notice Transfer tokens from one user to another
      * @param _recipient The user to transfer the tokens to
@@ -144,13 +164,16 @@ contract RebaseToken is ERC20, IRebaseToken, Ownable, AccessControl {
      */
 
     function transferFrom(address _sender, address _recipient, uint256 _amount) public override returns (bool) {
+        // Accrue interest for both parties before state changes
         _mintAccruedInterest(_sender);
         _mintAccruedInterest(_recipient);
 
+        // Handle "send all"
         if (_amount == type(uint256).max) {
             _amount = balanceOf(_sender);
         }
 
+        // If recipient had no tokens BEFORE transfer, inherit rate
         if (balanceOf(_recipient) == 0) {
             s_userInterestRate[_recipient] = s_userInterestRate[_sender];
         }
