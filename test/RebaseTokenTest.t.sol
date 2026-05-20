@@ -138,6 +138,7 @@ contract RebaseTokenTest is Test {
         vm.prank(user);
         vm.expectPartialRevert(bytes4(IAccessControl.AccessControlUnauthorizedAccount.selector)); // onlyRole
         rebaseToken.mint(user, 100);
+        // rebaseToken.mint(user, 100, rebaseToken.getInterestRate());
         vm.expectPartialRevert(bytes4(IAccessControl.AccessControlUnauthorizedAccount.selector)); //OnlyRole
         rebaseToken.burn(user, 100);
     }
