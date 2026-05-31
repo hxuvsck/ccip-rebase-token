@@ -29,7 +29,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IRebaseToken} from "../src/interfaces/IRebaseToken.sol";
 import {FinalityCodec} from "chainlink-ccip/chains/evm/contracts/libraries/FinalityCodec.sol";
 
-abstract contract RebaseTokenPool is TokenPool {
+contract RebaseTokenPool is TokenPool {
     constructor(IERC20 _token, address _advancedPoolHooks, address _rmnProxy, address _router)
         TokenPool(_token, 18, _advancedPoolHooks, _rmnProxy, _router)
     {}

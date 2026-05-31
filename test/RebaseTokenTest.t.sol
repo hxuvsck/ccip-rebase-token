@@ -129,17 +129,18 @@ contract RebaseTokenTest is Test {
 
     function testCannotSetInterestRate(uint256 newInterestRate) public {
         vm.prank(user);
-        vm.expectPartialRevert(bytes4(Ownable.OwnableUnauthorizedAccount.selector)); // customers can have args and are difficult to calculate in a testing env & could be unrelated to the test at hand. As we need Partial Revert to be expected
+        vm.expectPartialRevert(bytes4(keccak256("Ownable: caller is not the owner"))); // customers can have args and are difficult to calculate in a testing env & could be unrelated to the test at hand. As we need Partial Revert to be expected
         // And are of Ownable to be found as it's selector from where onlyOwner's _checkOwner, revert of OwnableUnauthorizedAccount as to be checked for this revert
         rebaseToken.setInterestRate(newInterestRate);
     }
 
     function testCannotCallMintAndBurn() public {
         vm.prank(user);
-        vm.expectPartialRevert(bytes4(IAccessControl.AccessControlUnauthorizedAccount.selector)); // onlyRole
+
+        vm.expectRevert("AccessControl: account is missing role");
         rebaseToken.mint(user, 100);
-        // rebaseToken.mint(user, 100, rebaseToken.getInterestRate());
-        vm.expectPartialRevert(bytes4(IAccessControl.AccessControlUnauthorizedAccount.selector)); //OnlyRole
+
+        vm.expectRevert("AccessControl: account is missing role");
         rebaseToken.burn(user, 100);
     }
 
